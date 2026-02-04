@@ -1,0 +1,38 @@
+app:
+  name: "Mate.AI"
+  version: "1.0.0"
+  description: "Lightweight conversational AI assistant"
+  debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 5000
+  workers: 2
+  timeout: 30
+
+huggingface:
+  api_url: "https://api-inference.huggingface.co/models"
+  model: "google/flan-t5-large"
+  max_length: 512
+  temperature: 0.7
+  timeout: 30
+
+security:
+  max_input_length: 1000
+  max_retries: 3
+  request_timeout: 60
+
+rate_limiting:
+  enabled: true
+  default: "10 per minute"
+  storage_uri: "memory://"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/mateai.log"
+
+prompts:
+  system_path: "data/prompts/system.txt"
+  style_path: "data/prompts/style.txt"
+  safety_path: "data/prompts/safety.txt"
