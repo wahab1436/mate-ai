@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mate.AI - Conversational Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="app-title">Mate.AI</h1>
+                <p class="app-subtitle">Professional Conversational Assistant</p>
+            </div>
+            
+            <button id="newChatBtn" class="new-chat-btn">
+                <span class="btn-icon">+</span>
+                New Chat
+            </button>
+            
+            <div class="chat-history">
+                <h3>Recent Conversations</h3>
+                <ul id="chatList">
+                    <!-- Chat sessions will be added here -->
+                </ul>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="scope-notice">
+                    <strong>Scope:</strong> General conversational assistance only.
+                    <br><br>
+                    <strong>Excluded:</strong> Coding, technical support, multi-language.
+                </div>
+                <div class="version">v1.0.0</div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <div class="chat-header">
+                <div class="chat-info">
+                    <h2>Mate.AI</h2>
+                    <p class="status-indicator" id="statusIndicator">Ready</p>
+                </div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <!-- Messages will be added here -->
+                <div class="welcome-message">
+                    <h3>Welcome to Mate.AI</h3>
+                    <p>I'm here to assist with general conversation and information.</p>
+                    <p class="limitation-notice">
+                        <strong>Note:</strong> I cannot assist with coding, technical problems, or provide specialized advice.
+                    </p>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Type your message here... (Max 1000 characters)"
+                        rows="3"
+                        maxlength="1000"
+                    ></textarea>
+                    <div class="input-controls">
+                        <div class="char-count">
+                            <span id="charCount">0</span>/1000
+                        </div>
+                        <button id="sendBtn" class="send-btn">
+                            Send
+                        </button>
+                    </div>
+                </div>
+                <p class="input-note">
+                    Press Shift+Enter for new line. Enter to send.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <h3>Error</h3>
+            <p id="errorMessage">An error occurred.</p>
+            <button id="closeModalBtn" class="modal-btn">Close</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
