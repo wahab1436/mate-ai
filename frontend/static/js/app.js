@@ -3,6 +3,7 @@ class MateAI {
         this.currentSession = this.generateSessionId();
         this.sessions = {};
         this.isProcessing = false;
+        this.currentMenuSessionId = null;
         this.initializeElements();
         this.attachEventListeners();
         this.loadSessions();
@@ -20,7 +21,12 @@ class MateAI {
             charCount: document.getElementById('charCount'),
             errorModal: document.getElementById('errorModal'),
             errorMessage: document.getElementById('errorMessage'),
-            closeModalBtn: document.getElementById('closeModalBtn')
+            closeModalBtn: document.getElementById('closeModalBtn'),
+            sidebar: document.getElementById('sidebar'),
+            openSidebarBtn: document.getElementById('openSidebarBtn'),
+            closeSidebarBtn: document.getElementById('closeSidebarBtn'),
+            chatOptionsMenu: document.getElementById('chatOptionsMenu'),
+            deleteChatBtn: document.getElementById('deleteChatBtn')
         };
     }
 
@@ -40,22 +46,79 @@ class MateAI {
         // Character count
         this.elements.messageInput.addEventListener('input', () => this.updateCharCount());
 
-        // Modal close
+        // Modal
         this.elements.closeModalBtn.addEventListener('click', () => this.hideErrorModal());
-
-        // Click outside modal to close
         this.elements.errorModal.addEventListener('click', (e) => {
             if (e.target === this.elements.errorModal) {
                 this.hideErrorModal();
             }
         });
 
-        // Escape key to close modal
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.elements.errorModal.classList.contains('active')) {
-                this.hideErrorModal();
+        // Sidebar toggle
+        this.elements.openSidebarBtn?.addEventListener('click', () => this.openSidebar());
+        this.elements.closeSidebarBtn?.addEventListener('click', () => this.closeSidebar());
+
+        // Delete chat
+        this.elements.deleteChatBtn.addEventListener('click', () => this.deleteChat());
+
+        // Close context menu
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu') && !e.target.closest('.chat-menu-btn')) {
+                this.hideContextMenu();
             }
         });
+
+        // Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (this.elements.errorModal.classList.contains('active')) {
+                    this.hideErrorModal();
+                }
+                this.hideContextMenu();
+            }
+        });
+    }
+
+    openSidebar() {
+        this.elements.sidebar.classList.add('open');
+    }
+
+    closeSidebar() {
+        this.elements.sidebar.classList.remove('open');
+    }
+
+    showContextMenu(event, sessionId) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        this.currentMenuSessionId = sessionId;
+        const menu = this.elements.chatOptionsMenu;
+        
+        menu.style.left = `${event.pageX}px`;
+        menu.style.top = `${event.pageY}px`;
+        menu.classList.add('active');
+    }
+
+    hideContextMenu() {
+        this.elements.chatOptionsMenu.classList.remove('active');
+        this.currentMenuSessionId = null;
+    }
+
+    deleteChat() {
+        if (!this.currentMenuSessionId) return;
+        
+        if (confirm('Delete this conversation?')) {
+            delete this.sessions[this.currentMenuSessionId];
+            
+            if (this.currentMenuSessionId === this.currentSession) {
+                this.newChat();
+            }
+            
+            this.saveSessions();
+            this.updateChatList();
+        }
+        
+        this.hideContextMenu();
     }
 
     generateSessionId() {
@@ -79,18 +142,16 @@ class MateAI {
     clearChatArea() {
         this.elements.messagesContainer.innerHTML = `
             <div class="welcome-message">
-                <h3>Welcome to Mate.AI</h3>
-                <p>I'm here to assist with general conversation and information.</p>
-                <p class="limitation-notice">
-                    <strong>Note:</strong> I cannot assist with coding, technical problems, or provide specialized advice.
-                </p>
+                <h3>Hey there! ??</h3>
+                <p>I'm Mate, your AI companion. Think of me as a helpful friend who's always here for you.</p>
+                <p>What's on your mind today?</p>
             </div>
         `;
     }
 
     async sendMessage() {
         const message = this.elements.messageInput.value.trim();
-        
+
         if (!message) {
             this.showError('Please enter a message.');
             return;
@@ -106,12 +167,10 @@ class MateAI {
             return;
         }
 
-        // Add user message to UI
         this.addMessage(message, 'user');
         this.elements.messageInput.value = '';
         this.updateCharCount();
 
-        // Show AI is responding
         this.showLoadingIndicator();
         this.isProcessing = true;
         this.updateStatus('Responding...');
@@ -120,7 +179,7 @@ class MateAI {
 
         try {
             const response = await this.callAPI(message);
-            
+
             if (response.status === 'success') {
                 this.addMessage(response.response, 'ai');
                 this.saveMessageToSession(message, response.response);
@@ -148,7 +207,10 @@ class MateAI {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ 
+                message, 
+                history: this.getConversationHistory() 
+            })
         });
 
         if (!response.ok) {
@@ -161,24 +223,30 @@ class MateAI {
         return await response.json();
     }
 
+    getConversationHistory() {
+        if (!this.sessions[this.currentSession]) {
+            return [];
+        }
+        return this.sessions[this.currentSession].slice(-10);
+    }
+
     addMessage(content, sender) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}`;
-        
-        const timestamp = new Date().toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+
+        const timestamp = new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
         });
-        
+
         messageDiv.innerHTML = `
             <div class="message-header">
-                <span class="sender">${sender === 'user' ? 'You' : 'Mate.AI'}</span>
+                <span class="sender">${sender === 'user' ? 'You' : 'Mate'}</span>
                 <span class="timestamp">${timestamp}</span>
             </div>
             <div class="message-content">${this.escapeHtml(content)}</div>
         `;
 
-        // Remove welcome message if present
         const welcomeMessage = this.elements.messagesContainer.querySelector('.welcome-message');
         if (welcomeMessage) {
             welcomeMessage.remove();
@@ -193,7 +261,7 @@ class MateAI {
         errorDiv.className = 'message ai error';
         errorDiv.innerHTML = `
             <div class="message-header">
-                <span class="sender">Mate.AI</span>
+                <span class="sender">Mate</span>
             </div>
             <div class="message-content">
                 I'm experiencing technical difficulties. Please try again shortly.
@@ -209,12 +277,12 @@ class MateAI {
         loadingDiv.id = 'loadingMessage';
         loadingDiv.innerHTML = `
             <div class="message-header">
-                <span class="sender">Mate.AI</span>
+                <span class="sender">Mate</span>
             </div>
             <div class="message-content">
                 <div class="loading-indicator">
                     <div class="dot-flashing"></div>
-                    Processing your request...
+                    Thinking...
                 </div>
             </div>
         `;
@@ -236,7 +304,7 @@ class MateAI {
     updateStatus(status) {
         this.elements.statusIndicator.textContent = status;
         this.elements.statusIndicator.className = 'status-indicator';
-        
+
         if (status === 'Responding...') {
             this.elements.statusIndicator.classList.add('responding');
         } else if (status === 'Error') {
@@ -247,27 +315,19 @@ class MateAI {
     updateCharCount() {
         const count = this.elements.messageInput.value.length;
         this.elements.charCount.textContent = count;
-        
-        if (count > 900) {
-            this.elements.charCount.style.color = 'var(--error-color)';
-        } else if (count > 750) {
-            this.elements.charCount.style.color = 'var(--warning-color)';
-        } else {
-            this.elements.charCount.style.color = '';
-        }
     }
 
     saveMessageToSession(userMessage, aiResponse) {
         if (!this.sessions[this.currentSession]) {
             this.sessions[this.currentSession] = [];
         }
-        
+
         this.sessions[this.currentSession].push({
             user: userMessage,
             ai: aiResponse,
             timestamp: Date.now()
         });
-        
+
         this.saveSessions();
         this.updateChatList();
     }
@@ -277,7 +337,7 @@ class MateAI {
             const sessionsToSave = {};
             for (const [sessionId, messages] of Object.entries(this.sessions)) {
                 if (messages.length > 0) {
-                    sessionsToSave[sessionId] = messages.slice(-10); // Keep last 10 messages
+                    sessionsToSave[sessionId] = messages.slice(-50);
                 }
             }
             localStorage.setItem('mateai_sessions', JSON.stringify(sessionsToSave));
@@ -301,9 +361,9 @@ class MateAI {
 
     updateChatList() {
         this.elements.chatList.innerHTML = '';
-        
-        const sessionIds = Object.keys(this.sessions).reverse(); // Most recent first
-        
+
+        const sessionIds = Object.keys(this.sessions).reverse();
+
         if (sessionIds.length === 0) {
             const emptyItem = document.createElement('li');
             emptyItem.className = 'chat-session empty';
@@ -311,25 +371,39 @@ class MateAI {
             this.elements.chatList.appendChild(emptyItem);
             return;
         }
-        
+
         sessionIds.forEach(sessionId => {
             const messages = this.sessions[sessionId];
             if (messages.length > 0) {
                 const lastMessage = messages[messages.length - 1];
-                const date = new Date(lastMessage.timestamp);
-                
+
                 const sessionItem = document.createElement('li');
                 sessionItem.className = `chat-session ${sessionId === this.currentSession ? 'active' : ''}`;
-                sessionItem.dataset.sessionId = sessionId;
-                
+
                 const preview = lastMessage.user.substring(0, 30) + (lastMessage.user.length > 30 ? '...' : '');
-                
+
                 sessionItem.innerHTML = `
-                    <div class="chat-preview">${this.escapeHtml(preview)}</div>
-                    <div class="chat-date">${date.toLocaleDateString()}</div>
+                    <div class="chat-session-content">
+                        <div class="chat-preview">${this.escapeHtml(preview)}</div>
+                    </div>
+                    <button class="chat-menu-btn" title="Options">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"/>
+                            <circle cx="12" cy="5" r="1"/>
+                            <circle cx="12" cy="19" r="1"/>
+                        </svg>
+                    </button>
                 `;
-                
-                sessionItem.addEventListener('click', () => this.loadSession(sessionId));
+
+                const content = sessionItem.querySelector('.chat-session-content');
+                const menuBtn = sessionItem.querySelector('.chat-menu-btn');
+
+                content.addEventListener('click', () => this.loadSession(sessionId));
+                menuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.showContextMenu(e, sessionId);
+                });
+
                 this.elements.chatList.appendChild(sessionItem);
             }
         });
@@ -348,27 +422,29 @@ class MateAI {
 
         this.currentSession = sessionId;
         this.clearChatArea();
-        
+
         const messages = this.sessions[sessionId];
         messages.forEach(msg => {
             this.addMessage(msg.user, 'user');
             this.addMessage(msg.ai, 'ai');
         });
-        
+
         this.updateChatList();
         this.updateStatus('Ready');
         this.scrollToBottom();
+        
+        if (window.innerWidth <= 768) {
+            this.closeSidebar();
+        }
     }
 
     showError(message) {
         this.elements.errorMessage.textContent = message;
         this.elements.errorModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
     }
 
     hideErrorModal() {
         this.elements.errorModal.classList.remove('active');
-        document.body.style.overflow = '';
     }
 
     escapeHtml(text) {
@@ -378,16 +454,6 @@ class MateAI {
     }
 }
 
-// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    const mateAI = new MateAI();
-    
-    // Global error handler
-    window.addEventListener('unhandledrejection', (event) => {
-        console.error('Unhandled promise rejection:', event.reason);
-        mateAI.showError('An unexpected error occurred. Please refresh the page.');
-    });
-    
-    // Focus input on load
-    mateAI.elements.messageInput.focus();
+    new MateAI();
 });
