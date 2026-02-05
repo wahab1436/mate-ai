@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mate.AI - Conversational Assistant</title>
+    <title>Mate - Your AI Companion</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,30 +12,30 @@
 <body>
     <div class="app-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h1 class="app-title">Mate.AI</h1>
-                <p class="app-subtitle">Professional Conversational Assistant</p>
+                <h1 class="app-title">Mate</h1>
+                <button id="closeSidebarBtn" class="icon-btn" title="Close sidebar">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
             
             <button id="newChatBtn" class="new-chat-btn">
-                <span class="btn-icon">+</span>
-                New Chat
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New chat
             </button>
             
             <div class="chat-history">
-                <h3>Recent Conversations</h3>
-                <ul id="chatList">
-                    <!-- Chat sessions will be added here -->
-                </ul>
+                <h3>Recents</h3>
+                <ul id="chatList"></ul>
             </div>
             
             <div class="sidebar-footer">
-                <div class="scope-notice">
-                    <strong>Scope:</strong> General conversational assistance only.
-                    <br><br>
-                    <strong>Excluded:</strong> Coding, technical support, multi-language.
-                </div>
                 <div class="version">v1.0.0</div>
             </div>
         </aside>
@@ -43,43 +43,44 @@
         <!-- Main Chat Area -->
         <main class="chat-container">
             <div class="chat-header">
-                <div class="chat-info">
-                    <h2>Mate.AI</h2>
-                    <p class="status-indicator" id="statusIndicator">Ready</p>
-                </div>
-            </div>
-
-            <div class="messages-container" id="messagesContainer">
-                <!-- Messages will be added here -->
-                <div class="welcome-message">
-                    <h3>Welcome to Mate.AI</h3>
-                    <p>I'm here to assist with general conversation and information.</p>
-                    <p class="limitation-notice">
-                        <strong>Note:</strong> I cannot assist with coding, technical problems, or provide specialized advice.
-                    </p>
-                </div>
-            </div>
-
-            <div class="input-container">
-                <div class="input-wrapper">
-                    <textarea 
-                        id="messageInput" 
-                        placeholder="Type your message here... (Max 1000 characters)"
-                        rows="3"
-                        maxlength="1000"
-                    ></textarea>
-                    <div class="input-controls">
-                        <div class="char-count">
-                            <span id="charCount">0</span>/1000
-                        </div>
-                        <button id="sendBtn" class="send-btn">
-                            Send
-                        </button>
+                <div class="chat-header-content">
+                    <button id="openSidebarBtn" class="icon-btn sidebar-toggle" title="Open menu">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 12h18M3 6h18M3 18h18"/>
+                        </svg>
+                    </button>
+                    <div class="chat-info">
+                        <h2>Mate</h2>
+                        <p class="status-indicator" id="statusIndicator">Ready</p>
                     </div>
                 </div>
-                <p class="input-note">
-                    Press Shift+Enter for new line. Enter to send.
-                </p>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <h3>Hey there! ??</h3>
+                    <p>I'm Mate, your AI companion. Think of me as a helpful friend who's always here for you.</p>
+                    <p>What's on your mind today?</p>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        id="messageInput"
+                        placeholder="Message Mate..."
+                        rows="1"
+                        maxlength="1000"
+                    ></textarea>
+                    <button id="sendBtn" class="send-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="char-count"><span id="charCount">0</span>/1000</span>
+                </div>
             </div>
         </main>
     </div>
@@ -91,6 +92,17 @@
             <p id="errorMessage">An error occurred.</p>
             <button id="closeModalBtn" class="modal-btn">Close</button>
         </div>
+    </div>
+
+    <!-- Chat Options Menu -->
+    <div id="chatOptionsMenu" class="context-menu">
+        <button class="context-menu-item danger" id="deleteChatBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete chat
+        </button>
     </div>
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
